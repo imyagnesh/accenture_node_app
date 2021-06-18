@@ -1,8 +1,14 @@
 const express = require("express");
+// const bodyParser = require('body-parser')
 const app = express();
 const Joi = require("joi");
 
+// app.user()
 app.use(express.json());
+
+// app.get("/api/todos", function (req, res) {
+//     res.send("Hello world from server.js");
+// });
 
 const todos = [
   {
