@@ -57,6 +57,7 @@ app.post("/api/todos", function (req, res) {
     if (error) {
       return res.status(401).send(error.details);
     }
+    const data = req.body;
     if (!data.isDone) {
       data.isDone = false;
     }
@@ -74,19 +75,34 @@ app.post("/api/todos", function (req, res) {
 });
 
 app.put("/api/todos/:id", function (req, res) {
-  const index = todos.findIndex((x) => x.id === Number(req.params.id));
-  if (index === -1)
-    return res.status(404).send({ message: "record not found" });
-
   // TODO: use splice for update record as well
-  todos.splice(index, 1);
-  const updatedTodo = {
-    ...req.body,
-    id: req.params.id,
-  };
-  todos.push(updatedTodo);
-
-  return res.status(201).send(updatedTodo);
+  try {
+    const index = todos.findIndex((x) => x.id === Number(req.params.id));
+    if (index === -1) {
+      return res.status(404).send({ message: "record not found" });
+    } else {
+      const schema = Joi.object({
+        todoText: Joi.string().min(3).required(),
+        isDone: Joi.boolean(),
+      });
+    
+      const { error } = schema.validate(req.body);
+      if (error) {
+        return res.status(401).send(error.details);
+      } else {
+        todos.splice(index, 1);
+        const updatedTodo = {
+          ...req.body,
+          id: Number(req.params.id),
+        };
+        todos.push(updatedTodo);
+        return res.status(201).send(updatedTodo);
+      }
+    }
+  } catch (error) {
+    console.log(error);
+    res.status(500).send({ message: "something is wrong" });
+  }
 });
 
 app.delete("/api/todos/:id", function (req, res) {
