@@ -1,10 +1,32 @@
 const express = require("express");
-// const bodyParser = require('body-parser')
+const morgan = require('morgan');
+const config = require('config');
 const app = express();
+const logger = require('./logger')
 const Joi = require("joi");
 
-// app.user()
+const dbConfig = config.get('Customer.dbConfig');
+const password = config.get('mail.password');
+console.log(dbConfig);
+console.log(password);
+
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+console.log(process.env.NODE_ENV);
+console.log(app.get('env'));
+
+
+if(app.get('env') === 'development') {
+    app.use(logger)
+    app.use(morgan('tiny'))
+}
+
+app.use(function(req, res, next) {
+    console.log('authenticate....');
+    next();
+})
+
 
 // app.get("/api/todos", function (req, res) {
 //     res.send("Hello world from server.js");
@@ -24,6 +46,7 @@ const todos = [
 ];
 
 app.get("/api/todos", function (req, res) {
+    console.log('get method...');
   const id = req.query.id;
   const todoText = req.query.todoText;
   let response = todos;
@@ -58,7 +81,7 @@ app.post("/api/todos", function (req, res) {
       isDone: Joi.boolean(),
     });
 
-    const { error } = schema.validate(req.body);
+    const {  error } = schema.validate(req.body);
 
     if (error) {
       return res.status(401).send(error.details);
