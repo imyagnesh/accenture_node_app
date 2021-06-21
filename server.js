@@ -1,9 +1,17 @@
 const express = require("express");
 const morgan = require('morgan');
 const config = require('config');
+const startUpDebugger = require('debug')('app:startup');
+const dbDebugger = require('debug')('app:db');
 const app = express();
 const logger = require('./logger')
 const Joi = require("joi");
+
+console.log(process.env.DEBUG);
+
+// yarn add pug
+app.set('view engine', 'pug');
+app.set('views', './views');
 
 const dbConfig = config.get('Customer.dbConfig');
 const password = config.get('mail.password');
@@ -12,6 +20,8 @@ console.log(password);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+// the folder name for static files
+app.use(express.static("public"));
 
 console.log(process.env.NODE_ENV);
 console.log(app.get('env'));
@@ -20,6 +30,7 @@ console.log(app.get('env'));
 if(app.get('env') === 'development') {
     app.use(logger)
     app.use(morgan('tiny'))
+    startUpDebugger('morgan started')
 }
 
 app.use(function(req, res, next) {
@@ -31,6 +42,8 @@ app.use(function(req, res, next) {
 // app.get("/api/todos", function (req, res) {
 //     res.send("Hello world from server.js");
 // });
+
+dbDebugger('db started');
 
 const todos = [
   {
@@ -44,6 +57,11 @@ const todos = [
     isDone: false,
   },
 ];
+
+// server side rendering app
+app.get("/", function(req, res) {
+  res.render('index', {pageTitle: "Node.js Training", youAreUsingPug: true})
+})
 
 app.get("/api/todos", function (req, res) {
     console.log('get method...');
