@@ -6,12 +6,16 @@ const dbDebugger = require("debug")("app:db");
 const app = express();
 const logger = require("./logger");
 const Joi = require("joi");
+
 const mongoose = require("mongoose");
+const Fawn = require("fawn");
 const connect = require("./connect");
 const Course = require("./model/courses");
 const Author = require("./model/authors");
 
 connect();
+
+Fawn.init(mongoose);
 
 app.set("view engine", "pug");
 app.set("views", "./views");
@@ -88,20 +92,29 @@ const courseValidationSchema = Joi.object({
 //   }
 // });
 
+// save author
+// save course -> author.id
+
 app.post("/api/courses", async (req, res) => {
   try {
-    const { authors: authorsData, ...courseData } = req.body;
+    const { author: authorData, ...courseData } = req.body;
+    // add data in temp memory
+    const author = new Author(authorData);
+    const course = new Course({ ...courseData, author: author._id });
+
+    await Fawn.Task().save("Author", author).save("Course", course).run();
+    // const author = new Author(authorData);
     // await author.validate();
     // await author.save();
 
-    const course = new Course(courseData);
-    for (let i = 0; i < authorsData.length; i++) {
-      const element = authorsData[i];
-      course.authors.push(new Author(element));
-    }
+    // const course = new Course({ ...courseData, author: author._id });
+    // // for (let i = 0; i < authorsData.length; i++) {
+    // //   const element = authorsData[i];
+    // //   course.authors.push(new Author(element));
+    // // }
 
-    await course.validate();
-    await course.save();
+    // await course.validate();
+    // await course.save();
     res.status(201).send(course);
   } catch (error) {
     if (error.name === "ValidationError") {

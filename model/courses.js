@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const Joi = require("joi");
+Joi.objectId = require("joi-objectid")(Joi);
 
 const authorSchema = new mongoose.Schema({
   name: {
@@ -23,7 +24,10 @@ const courseSchema = new mongoose.Schema({
     trim: true,
     // match: /pattern/
   },
-  authors: [authorSchema],
+  author: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Author",
+  },
   tags: {
     type: Array,
     validate: {
@@ -53,6 +57,7 @@ const courseSchema = new mongoose.Schema({
 
 const validateCourse = (course) => {
   const schema = Joi.object({
+    _id: Joi.objectId(),
     name: Joi.string().required().min(3).max(100),
     author: Joi.string().required().min(2).max(100),
   });
