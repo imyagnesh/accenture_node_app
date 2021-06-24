@@ -13,6 +13,13 @@ const connect = require("./connect");
 const Course = require("./model/courses");
 const Author = require("./model/authors");
 
+// Task 23.06
+
+const Movie = require("./model/movies");
+const { genreModel: Genre } = require("./model/genres");
+const { query } = require("express");
+const { awaitExpression } = require("@babel/types");
+
 connect();
 
 Fawn.init(mongoose);
@@ -293,6 +300,62 @@ app.get("/api/courses/:id", async (req, res) => {
 //   // }
 //   res.send(req.params);
 // });
+
+//
+//
+//
+
+// Task 23.06
+
+app.post("/api/movies", async (req, res) => {
+  try {
+    const movie = new Movie(req.body);
+    console.log(movie);
+    await movie.validate();
+    const newMovie = await movie.save();
+    res.status(201).send(newMovie);
+  } catch (error) {
+    res.status(500).send({ message: error });
+  }
+});
+
+app.get("/api/movies", async (req, res) => {
+  try {
+    const querys = {};
+    const { movie, genre } = req.query;
+    if (movie) querys.name = new RegExp(`.*${movie}.*`, "i");
+    if (genre) querys["genre.name"] = new RegExp(`.*${genre}.*`, "i");
+    const movies = await Movie.find({ ...querys });
+    res.status(200).send(movies);
+  } catch (error) {
+    res.status(500).send({ message: "server error" });
+  }
+});
+
+app.put("/api/movies/:movieId", async (req, res) => {
+  try {
+    const updated = await Movie.updateOne(
+      {
+        _id: req.params.movieId,
+      },
+      { $set: req.body },
+      { runValidators: true }
+    );
+    res.status(201).send(updated);
+  } catch (error) {
+    console.log(error);
+    res.status(500).send({ message: "server error" });
+  }
+});
+
+app.delete("/api/movies/:movieId", async (req, res) => {
+  try {
+    const deleted = await Movie.deleteOne({ _id: req.params.movieId });
+    res.status(200).send(deleted);
+  } catch (error) {
+    res.status(500).send({ message: "server error" });
+  }
+});
 
 var port = process.env.PORT || 3000;
 
